@@ -14,7 +14,20 @@
   const button=document.getElementById('submit');
   let busy=false, saved=false, requestId=newId();
   function newId(){return crypto.randomUUID?crypto.randomUUID(): 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&3|8)).toString(16);});}
-  function notify(){if(window.top!==window)window.top.postMessage({type:'wedding:height',height:document.documentElement.scrollHeight+12,channel},cfg.parentOrigin||location.origin);}
+  let heightFrame=0, lastHeight=0;
+  function notify(){
+    if(window.top===window||heightFrame)return;
+    heightFrame=requestAnimationFrame(()=>{
+      heightFrame=0;
+      // The document scrollHeight includes the iframe viewport. Adding padding
+      // to that value creates a feedback loop as the parent resizes the iframe.
+      const body=document.body, style=getComputedStyle(body);
+      const height=Math.ceil(body.getBoundingClientRect().height+(parseFloat(style.marginTop)||0)+(parseFloat(style.marginBottom)||0)+12);
+      if(height===lastHeight)return;
+      lastHeight=height;
+      window.top.postMessage({type:'wedding:height',height,channel},cfg.parentOrigin||location.origin);
+    });
+  }
   function render(){document.documentElement.lang=lang;document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=strings[lang][el.dataset.i18n]);button.textContent=strings[lang][busy?'sending':'submit'];if(saved)status.textContent=strings[lang].saved;total();notify();}
   function total(){const a=Number(form.elements.adults.value)||0,c=Number(form.elements.children.value)||0;document.getElementById('total').textContent=`${strings[lang].total}: ${a+c}`;}
   function toggle(){const yes=form.elements.attendance.value==='yes';fields.hidden=!yes;fields.disabled=!yes;notify();}

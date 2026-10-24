@@ -15,12 +15,11 @@
   let busy=false, saved=false, requestId=newId();
   function newId(){return crypto.randomUUID?crypto.randomUUID(): 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&3|8)).toString(16);});}
   function notify(){if(window.top!==window)window.top.postMessage({type:'wedding:height',height:document.documentElement.scrollHeight+12,channel},cfg.parentOrigin||location.origin);}
-  function render(){document.documentElement.lang=lang;document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=strings[lang][el.dataset.i18n]);document.getElementById('form-language').value=lang;button.textContent=strings[lang][busy?'sending':'submit'];if(saved)status.textContent=strings[lang].saved;total();notify();}
+  function render(){document.documentElement.lang=lang;document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=strings[lang][el.dataset.i18n]);button.textContent=strings[lang][busy?'sending':'submit'];if(saved)status.textContent=strings[lang].saved;total();notify();}
   function total(){const a=Number(form.elements.adults.value)||0,c=Number(form.elements.children.value)||0;document.getElementById('total').textContent=`${strings[lang].total}: ${a+c}`;}
   function toggle(){const yes=form.elements.attendance.value==='yes';fields.hidden=!yes;fields.disabled=!yes;notify();}
   form.addEventListener('change',toggle);
   form.addEventListener('input',()=>{if(saved){saved=false;requestId=newId();status.textContent='';}total();});
-  document.getElementById('form-language').addEventListener('change',e=>{lang=e.target.value;render();});
   window.addEventListener('message',e=>{if(e.origin!==(cfg.parentOrigin||location.origin)||e.data?.channel!==channel||e.data.type!=='wedding:language'||!strings[e.data.lang])return;lang=e.data.lang;render();});
   form.addEventListener('submit',e=>{
     e.preventDefault();if(busy||!form.reportValidity())return;

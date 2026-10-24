@@ -1,8 +1,8 @@
 (() => {
   const config = window.WEDDING;
   const text = {
-    de: {home:'Home',rsvp:'Rückmeldung',faq:'Fragen & Antworten',skip:'Zum Inhalt',celebrate:'Wir heiraten!',date:'12. August',civil:'Standesamt · 11. August · Berlin',intro:'Wir heiraten! Das ist aufregend, ein bisschen surreal und ein sehr guter Anlass, euch alle an einem Ort zu versammeln. Merkt euch das Datum. Weitere Details folgen in den kommenden Monaten.',reply:'Seid ihr dabei?',rsvpIntro:'Eine Rückmeldung pro Haushalt genügt. Sagt uns schon einmal, ob ihr plant, dabei zu sein.',faqIntro:'Ein paar erste Antworten. Alles Weitere teilen wir mit euch, sobald die Details feststehen.',footer:'Leo & Ida · Potsdam',preview:'Vorschau: Die Rückmeldung ist noch nicht mit Google Sheets verbunden.',standalone:'Formular separat öffnen',photoAlt:'Vorläufiges Beispielfoto eines Paares am Strand'},
-    en: {home:'Home',rsvp:'RSVP',faq:'FAQ',skip:'Skip to content',celebrate:'We’re getting married!',date:'August 12',civil:'City hall ceremony · August 11 · Berlin',intro:'We’re getting married! Which is exciting, slightly surreal, and a very good excuse to have all of you in one place. Save the date. We’ll share the details over the coming months.',reply:'Will you join us?',rsvpIntro:'One response per household is enough. Let us know whether you’re planning to join us.',faqIntro:'A few first answers. We’ll share more as the details come together.',footer:'Ida & Leo · Potsdam',preview:'Preview: The RSVP is not connected to Google Sheets yet.',standalone:'Open the form separately',photoAlt:'Temporary example photograph of a couple at the beach'}
+    de: {home:'Home',rsvp:'Rückmeldung',faq:'Fragen & Antworten',skip:'Zum Inhalt',celebrate:'Wir heiraten!',date:'12. August',civil:'Standesamt · 11. August · Berlin',intro:'Wir heiraten! Das ist aufregend, ein bisschen surreal und ein sehr guter Anlass, euch alle an einem Ort zu versammeln. Merkt euch das Datum. Weitere Details folgen in den kommenden Monaten.',reply:'Seid ihr dabei?',rsvpIntro:'Eine Rückmeldung pro Haushalt genügt. Sagt uns schon einmal, ob ihr plant, dabei zu sein.',faqIntro:'Ein paar erste Antworten. Alles Weitere teilen wir mit euch, sobald die Details feststehen.',footer:'Leo & Ida · Potsdam',preview:'Vorschau: Die Rückmeldung ist noch nicht mit Google Sheets verbunden.'},
+    en: {home:'Home',rsvp:'RSVP',faq:'FAQ',skip:'Skip to content',celebrate:'We’re getting married!',date:'August 12',civil:'City hall ceremony · August 11 · Berlin',intro:'We’re getting married! Which is exciting, slightly surreal, and a very good excuse to have all of you in one place. Save the date. We’ll share the details over the coming months.',reply:'Will you join us?',rsvpIntro:'One response per household is enough. Let us know whether you’re planning to join us.',faqIntro:'A few first answers. We’ll share more as the details come together.',footer:'Ida & Leo · Potsdam',preview:'Preview: The RSVP is not connected to Google Sheets yet.'}
   };
   // Same eleven subject areas as the reference; unconfirmed arrangements stay explicit.
   const questions = {
@@ -51,7 +51,6 @@
     if (!deployed) frameUrl.searchParams.set('preview','1');
     frame.src = frameUrl.href;
     document.getElementById('setup-note').hidden = deployed;
-    document.getElementById('form-link').href = frameUrl.href;
     window.addEventListener('message', event => {
       let originOK = event.origin === location.origin;
       try { const u = new URL(event.origin); originOK ||= u.protocol==='https:' && (u.hostname==='script.google.com'||u.hostname.endsWith('.googleusercontent.com')); } catch (_) {}
@@ -67,10 +66,11 @@
     document.querySelectorAll('[data-i18n]').forEach(el => {el.textContent=text[lang][el.dataset.i18n]||'';});
     document.querySelectorAll('[data-language]').forEach(el => el.setAttribute('aria-pressed',String(el.dataset.language===lang)));
     document.querySelectorAll('[data-year]').forEach(el => el.textContent=config.year);
-    const photo=document.getElementById('hero');if(photo){photo.src=config.photo;photo.alt=text[lang].photoAlt;}
+    const timeline=document.getElementById('timeline');
+    if(timeline){timeline.setAttribute('aria-label',lang==='de'?'Unsere Geschichte':'Our story');timeline.querySelectorAll('img').forEach(img=>{img.alt=`${img.dataset.person || 'Ida & Leo'} · ${img.dataset.photoYear}`;});}
     const list=document.getElementById('faq-list');if(list){list.replaceChildren();questions[lang].forEach(([q,a])=>{const item=document.createElement('details');const s=document.createElement('summary');s.textContent=q;const p=document.createElement('p');p.textContent=a.replaceAll('YEAR',config.year);item.append(s,p);list.append(item);});}
     document.title=`Ida & Leo · ${text[lang][page==='home'?'home':page]}`;
-    if(frame){frame.title=text[lang].rsvp;document.getElementById('form-link').href=(()=>{const u=new URL(frameUrl);u.searchParams.set('lang',lang);return u.href;})();}
+    if(frame)frame.title=text[lang].rsvp;
   }
   document.querySelectorAll('[data-language]').forEach(el => el.addEventListener('click',()=>{lang=el.dataset.language;try{localStorage.setItem('weddingLanguage',lang);}catch(_){}render();if(formWindow)formWindow.postMessage({type:'wedding:language',lang,channel},formOrigin);}));
   render();

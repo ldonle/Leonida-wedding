@@ -1,0 +1,12 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ida & Leo · RSVP preview</title><link rel="stylesheet" href="form.css"></head><body>
+<form id="response">
+<div class="field"><label for="name" data-i18n="name"></label><input id="name" name="name" autocomplete="name" maxlength="200" required></div>
+<fieldset><legend data-i18n="attendance"></legend><div class="choices"><label class="choice"><input type="radio" name="attendance" value="yes" required><span data-i18n="yes"></span></label><label class="choice"><input type="radio" name="attendance" value="no" required><span data-i18n="no"></span></label></div></fieldset>
+<fieldset id="attending-fields" hidden disabled>
+<div class="field"><label for="email" data-i18n="email"></label><input id="email" name="email" type="email" autocomplete="email" maxlength="254" required></div>
+<div class="row"><div class="field"><label for="adults" data-i18n="adults"></label><input id="adults" name="adults" type="number" min="1" step="1" value="1" required></div><div class="field"><label for="children" data-i18n="children"></label><input id="children" name="children" type="number" min="0" step="1" value="0" required></div></div><p class="hint" data-i18n="counts"></p><p class="total" id="total"></p>
+<div class="field"><label for="street" data-i18n="street"></label><input id="street" name="street" autocomplete="address-line1" maxlength="300" required></div>
+<div class="row"><div class="field"><label for="postalCode" data-i18n="postalCode"></label><input id="postalCode" name="postalCode" autocomplete="postal-code" maxlength="40" required></div><div class="field"><label for="city" data-i18n="city"></label><input id="city" name="city" autocomplete="address-level2" maxlength="150" required></div></div>
+<div class="field"><label for="country" data-i18n="country"></label><input id="country" name="country" autocomplete="country-name" maxlength="150" required></div><p class="privacy" data-i18n="privacy"></p></fieldset>
+<div class="trap" aria-hidden="true"><label for="website" data-i18n="website"></label><input id="website" name="website" autocomplete="off" tabindex="-1"></div>
+<button class="submit" id="submit" type="submit" data-i18n="submit"></button><p id="status" class="status" role="status" aria-live="polite"></p><p class="hint" data-i18n="resend"></p></form><script>window.FORM_CONFIG={preview:true};</script><script src="form.js"></script></body></html>

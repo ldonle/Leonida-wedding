@@ -8,6 +8,10 @@
     de:{guestNames:'Name(n) der weiteren Gäste',lessAdults:'Weniger Erwachsene',moreAdults:'Mehr Erwachsene',lessChildren:'Weniger Kinder',moreChildren:'Mehr Kinder',days:'An welchen Tagen seid ihr dabei?',bothDays:'An beiden Tagen',only11:'Nur am 11. August',only12:'Nur am 12. August',name:'Vollständiger Name',attendance:'Seid ihr dabei?',yes:'Ich plane, dabei zu sein',no:'Ich kann nicht / bin unsicher',email:'E-Mail-Adresse',adults:'Anzahl Erwachsene',children:'Anzahl Kinder',counts:'Bitte zählt euch selbst mit. Kinder werden separat gezählt.',street:'Straße und Hausnummer',postalCode:'Postleitzahl',city:'Ort',country:'Land',submit:'Rückmeldung senden',sending:'Wird gespeichert …',resend:'Etwas hat sich geändert? Sendet das Formular einfach erneut mit demselben Namen. Wir berücksichtigen eure neueste Rückmeldung.',privacy:'Wir verwenden eure Angaben für die Planung unserer Hochzeit und den Versand weiterer Informationen. Eure Rückmeldung wird in unserem privaten Google Sheet gespeichert.',saved:'Danke! Eure Rückmeldung wurde gespeichert.',error:'Die Rückmeldung konnte nicht bestätigt werden. Eure Angaben bleiben erhalten. Bitte versucht es erneut.',preview:'Dies ist eine Vorschau. Es wurde nichts gesendet oder gespeichert.',total:'Gäste insgesamt',direct:'Sprache',website:'Website'},
     en:{guestNames:'Name(s) of additional guest(s)',lessAdults:'Fewer adults',moreAdults:'More adults',lessChildren:'Fewer children',moreChildren:'More children',days:'Which days will you join us?',bothDays:'Both days',only11:'Only August 11',only12:'Only August 12',name:'Full name',attendance:'Will you join us?',yes:'I’m planning to come',no:'I can’t make it / not sure',email:'Email address',adults:'Number of adults',children:'Number of children',counts:'Include yourself in the adult count. Count children separately.',street:'Street and house number',postalCode:'Postal code',city:'City',country:'Country',submit:'Send response',sending:'Saving …',resend:'Plans changed? Simply send the form again using the same name. We’ll use your latest response.',privacy:'We use your details to plan our wedding and send you further information. Your response is stored in our private Google Sheet.',saved:'Thank you! Your response has been saved.',error:'We couldn’t confirm your response was saved. Your details are still here. Please try again.',preview:'This is a preview. Nothing was sent or saved.',total:'Total guests',direct:'Language',website:'Website'}
   };
+  if(event==='civil'){
+    strings.de.counts+=' Hinweis: Die Gästezahl gilt für unsere Hochzeitsfeier am 12. August.';
+    strings.en.counts+=' Just a note: The number of guests only applies to our wedding celebration on August 12.';
+  }
   if(!strings[lang])lang='de';
   const form=document.getElementById('response');
   const guestNamesField=document.getElementById('guest-names-field');
@@ -46,7 +50,30 @@
   }));
   form.addEventListener('change',toggle);
   form.addEventListener('input',()=>{if(saved){saved=false;requestId=newId();status.textContent='';}total();});
-  window.addEventListener('message',e=>{if(e.origin!==(cfg.parentOrigin||location.origin)||e.data?.channel!==channel||e.data.type!=='wedding:language'||!strings[e.data.lang])return;lang=e.data.lang;render();});
+  window.addEventListener('message',e=>{
+    if(e.source!==window.top||e.origin!==(cfg.parentOrigin||location.origin)||e.data?.channel!==channel)return;
+    if(e.data.type==='wedding:snapshot'){
+      const values={};
+      form.querySelectorAll('input[name]').forEach(input=>{
+        if(input.type!=='radio'||input.checked)values[input.name]=input.value;
+      });
+      window.top.postMessage({type:'wedding:draft',channel,token:e.data.token,draft:{values,requestId,saved}},cfg.parentOrigin||location.origin);
+      return;
+    }
+    if(!['wedding:language','wedding:restore'].includes(e.data.type)||!strings[e.data.lang])return;
+    lang=e.data.lang;
+    if(e.data.type==='wedding:restore'&&e.data.draft){
+      const draft=e.data.draft, values=draft.values||{};
+      form.querySelectorAll('input[name]').forEach(input=>{
+        if(input.type==='radio')input.checked=values[input.name]===input.value;
+        else if(typeof values[input.name]==='string')input.value=values[input.name];
+      });
+      if(typeof draft.requestId==='string'&&/^[a-f0-9-]{36}$/i.test(draft.requestId))requestId=draft.requestId;
+      saved=draft.saved===true;
+      toggle();
+    }
+    render();
+  });
   form.addEventListener('submit',e=>{
     e.preventDefault();if(busy||!form.reportValidity())return;
     if(saved){saved=false;requestId=newId();}

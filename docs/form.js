@@ -1,14 +1,16 @@
 (() => {
   const cfg=window.FORM_CONFIG||{preview:true};
   const params=new URLSearchParams(location.search);
+  const event=(cfg.event||params.get('event'))==='civil'?'civil':'regular';
   const channel=cfg.channel||params.get('channel')||'';
   let lang=cfg.lang||params.get('lang')||'de';
   const strings={
-    de:{name:'Vollständiger Name',attendance:'Seid ihr dabei?',yes:'Ich plane, dabei zu sein',no:'Ich kann nicht kommen',email:'E-Mail-Adresse',adults:'Anzahl Erwachsene',children:'Anzahl Kinder',counts:'Bitte zählt euch selbst mit. Kinder werden separat gezählt.',street:'Straße und Hausnummer',postalCode:'Postleitzahl',city:'Ort',country:'Land',submit:'Rückmeldung senden',sending:'Wird gespeichert …',resend:'Etwas hat sich geändert? Sendet das Formular einfach erneut mit demselben Namen. Wir berücksichtigen eure neueste Rückmeldung.',privacy:'Wir verwenden eure Angaben für die Planung unserer Hochzeit und den Versand weiterer Informationen. Eure Rückmeldung wird in unserem privaten Google Sheet gespeichert.',saved:'Danke! Eure Rückmeldung wurde gespeichert.',error:'Die Rückmeldung konnte nicht bestätigt werden. Eure Angaben bleiben erhalten. Bitte versucht es erneut.',preview:'Dies ist eine Vorschau. Es wurde nichts gesendet oder gespeichert.',total:'Gäste insgesamt',direct:'Sprache',website:'Website'},
-    en:{name:'Full name',attendance:'Will you join us?',yes:'I’m planning to come',no:'I can’t come',email:'Email address',adults:'Number of adults',children:'Number of children',counts:'Include yourself in the adult count. Count children separately.',street:'Street and house number',postalCode:'Postal code',city:'City',country:'Country',submit:'Send response',sending:'Saving …',resend:'Plans changed? Simply send the form again using the same name. We’ll use your latest response.',privacy:'We use your details to plan our wedding and send you further information. Your response is stored in our private Google Sheet.',saved:'Thank you! Your response has been saved.',error:'We couldn’t confirm your response was saved. Your details are still here. Please try again.',preview:'This is a preview. Nothing was sent or saved.',total:'Total guests',direct:'Language',website:'Website'}
+    de:{days:'An welchen Tagen seid ihr dabei?',bothDays:'An beiden Tagen',only11:'Nur am 11. August',only12:'Nur am 12. August',name:'Vollständiger Name',attendance:'Seid ihr dabei?',yes:'Ich plane, dabei zu sein',no:'Ich kann nicht / bin unsicher',email:'E-Mail-Adresse',adults:'Anzahl Erwachsene',children:'Anzahl Kinder',counts:'Bitte zählt euch selbst mit. Kinder werden separat gezählt.',street:'Straße und Hausnummer',postalCode:'Postleitzahl',city:'Ort',country:'Land',submit:'Rückmeldung senden',sending:'Wird gespeichert …',resend:'Etwas hat sich geändert? Sendet das Formular einfach erneut mit demselben Namen. Wir berücksichtigen eure neueste Rückmeldung.',privacy:'Wir verwenden eure Angaben für die Planung unserer Hochzeit und den Versand weiterer Informationen. Eure Rückmeldung wird in unserem privaten Google Sheet gespeichert.',saved:'Danke! Eure Rückmeldung wurde gespeichert.',error:'Die Rückmeldung konnte nicht bestätigt werden. Eure Angaben bleiben erhalten. Bitte versucht es erneut.',preview:'Dies ist eine Vorschau. Es wurde nichts gesendet oder gespeichert.',total:'Gäste insgesamt',direct:'Sprache',website:'Website'},
+    en:{days:'Which days will you join us?',bothDays:'Both days',only11:'Only August 11',only12:'Only August 12',name:'Full name',attendance:'Will you join us?',yes:'I’m planning to come',no:'I can’t make it / not sure',email:'Email address',adults:'Number of adults',children:'Number of children',counts:'Include yourself in the adult count. Count children separately.',street:'Street and house number',postalCode:'Postal code',city:'City',country:'Country',submit:'Send response',sending:'Saving …',resend:'Plans changed? Simply send the form again using the same name. We’ll use your latest response.',privacy:'We use your details to plan our wedding and send you further information. Your response is stored in our private Google Sheet.',saved:'Thank you! Your response has been saved.',error:'We couldn’t confirm your response was saved. Your details are still here. Please try again.',preview:'This is a preview. Nothing was sent or saved.',total:'Total guests',direct:'Language',website:'Website'}
   };
   if(!strings[lang])lang='de';
   const form=document.getElementById('response');
+  const dayFields=document.getElementById('day-fields');
   const fields=document.getElementById('attending-fields');
   const status=document.getElementById('status');
   const button=document.getElementById('submit');
@@ -30,7 +32,7 @@
   }
   function render(){document.documentElement.lang=lang;document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=strings[lang][el.dataset.i18n]);button.textContent=strings[lang][busy?'sending':'submit'];if(saved)status.textContent=strings[lang].saved;total();notify();}
   function total(){const a=Number(form.elements.adults.value)||0,c=Number(form.elements.children.value)||0;document.getElementById('total').textContent=`${strings[lang].total}: ${a+c}`;}
-  function toggle(){const yes=form.elements.attendance.value==='yes';fields.hidden=!yes;fields.disabled=!yes;notify();}
+  function toggle(){const yes=form.elements.attendance.value==='yes';fields.hidden=!yes;fields.disabled=!yes;dayFields.hidden=!(yes&&event==='civil');dayFields.disabled=dayFields.hidden;notify();}
   form.addEventListener('change',toggle);
   form.addEventListener('input',()=>{if(saved){saved=false;requestId=newId();status.textContent='';}total();});
   window.addEventListener('message',e=>{if(e.origin!==(cfg.parentOrigin||location.origin)||e.data?.channel!==channel||e.data.type!=='wedding:language'||!strings[e.data.lang])return;lang=e.data.lang;render();});
@@ -38,7 +40,7 @@
     e.preventDefault();if(busy||!form.reportValidity())return;
     if(saved){saved=false;requestId=newId();}
     if(cfg.preview||!window.google?.script?.run){status.textContent=strings[lang].preview;notify();return;}
-    const values=Object.fromEntries(new FormData(form));values.requestId=requestId;values.lang=lang;
+    const values=Object.fromEntries(new FormData(form));values.requestId=requestId;values.lang=lang;values.event=event;values.days=values.attendance==='yes'&&event==='civil'?values.days:'';
     busy=true;button.disabled=true;status.textContent='';render();
     const finish=()=>{busy=false;button.disabled=false;button.textContent=strings[lang].submit;notify();};
     google.script.run.withSuccessHandler(result=>{if(result?.ok){saved=true;status.textContent=strings[lang].saved;}else{status.textContent=strings[lang].error;}finish();}).withFailureHandler(()=>{status.textContent=strings[lang].error;finish();}).submitRsvp(values);

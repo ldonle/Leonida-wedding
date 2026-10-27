@@ -28,7 +28,6 @@
   const ornament = `<img class="illustration villa-logo" src="assets/Villa3.png" alt="Villa Aurea" width="400" height="158">`;
   document.querySelector('header').innerHTML = `${ornament}<h1 class="names">Ida <span>&amp;</span> Leo</h1><p class="fullname">Farieda Gaber &amp; Leonhard Donle</p><nav class="nav" aria-label="Main"><a href="civil.html" data-i18n="home" ${page==='home'?'aria-current="page"':''}></a><a href="rsvp_civil.html" data-i18n="rsvp" ${page==='rsvp'?'aria-current="page"':''}></a><a href="faq_civil.html" data-i18n="faq" ${page==='faq'?'aria-current="page"':''}></a></nav>`;
   let formWindow = null, formOrigin = null;
-  let formDraft=null, pendingReload=null, reloadTimer=null;
   const frame = document.getElementById('rsvp-frame');
   const channel = 'wedding-' + (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2));
   let frameUrl;
@@ -45,14 +44,9 @@
       let originOK = event.origin === location.origin;
       try { const u = new URL(event.origin); originOK ||= u.protocol==='https:' && (u.hostname==='script.google.com'||u.hostname.endsWith('.googleusercontent.com')); } catch (_) {}
       if (!originOK || event.data?.channel !== channel) return;
-      if(event.data.type==='wedding:draft'&&event.source===formWindow&&event.origin===formOrigin&&pendingReload&&event.data.token===pendingReload){
-        formDraft=event.data.draft;
-        clearTimeout(reloadTimer);pendingReload=null;
-        reloadForm();return;
-      }
       if (event.data.type==='wedding:height' && Number.isFinite(event.data.height)) {
         frame.style.height = Math.min(5000,Math.max(350,event.data.height))+'px';
-        if(formWindow!==event.source){formWindow=event.source;formOrigin=event.origin;formWindow.postMessage({type:formDraft?'wedding:restore':'wedding:language',lang,channel,draft:formDraft},formOrigin);}
+        if(formWindow!==event.source){formWindow=event.source;formOrigin=event.origin;formWindow.postMessage({type:'wedding:language',lang,channel},formOrigin);}
       }
     });
   }
@@ -62,16 +56,7 @@
     frame.src=frameUrl.href;
   }
   function reloadFormLanguage(){
-    if(!frame)return;
-    if(!formWindow){reloadForm();return;}
-    clearTimeout(reloadTimer);
-    pendingReload=channel+'-'+Math.random().toString(36).slice(2);
-    formWindow.postMessage({type:'wedding:snapshot',channel,token:pendingReload},formOrigin);
-    // Preserve details in older forms until the updated deployment is live.
-    reloadTimer=setTimeout(()=>{
-      pendingReload=null;
-      if(formWindow)formWindow.postMessage({type:'wedding:language',lang,channel},formOrigin);
-    },1500);
+    if(frame)reloadForm();
   }
   function render() {
     document.documentElement.lang=lang;

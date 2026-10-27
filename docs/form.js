@@ -51,28 +51,8 @@
   form.addEventListener('change',toggle);
   form.addEventListener('input',()=>{if(saved){saved=false;requestId=newId();status.textContent='';}total();});
   window.addEventListener('message',e=>{
-    if(e.source!==window.top||e.origin!==(cfg.parentOrigin||location.origin)||e.data?.channel!==channel)return;
-    if(e.data.type==='wedding:snapshot'){
-      const values={};
-      form.querySelectorAll('input[name]').forEach(input=>{
-        if(input.type!=='radio'||input.checked)values[input.name]=input.value;
-      });
-      window.top.postMessage({type:'wedding:draft',channel,token:e.data.token,draft:{values,requestId,saved}},cfg.parentOrigin||location.origin);
-      return;
-    }
-    if(!['wedding:language','wedding:restore'].includes(e.data.type)||!strings[e.data.lang])return;
-    lang=e.data.lang;
-    if(e.data.type==='wedding:restore'&&e.data.draft){
-      const draft=e.data.draft, values=draft.values||{};
-      form.querySelectorAll('input[name]').forEach(input=>{
-        if(input.type==='radio')input.checked=values[input.name]===input.value;
-        else if(typeof values[input.name]==='string')input.value=values[input.name];
-      });
-      if(typeof draft.requestId==='string'&&/^[a-f0-9-]{36}$/i.test(draft.requestId))requestId=draft.requestId;
-      saved=draft.saved===true;
-      toggle();
-    }
-    render();
+    if(e.source!==window.top||e.origin!==(cfg.parentOrigin||location.origin)||e.data?.channel!==channel||e.data.type!=='wedding:language'||!strings[e.data.lang])return;
+    lang=e.data.lang;render();
   });
   form.addEventListener('submit',e=>{
     e.preventDefault();if(busy||!form.reportValidity())return;
